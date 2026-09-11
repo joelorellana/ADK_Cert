@@ -7,7 +7,7 @@ Reference: https://google.github.io/adk-docs/tools-custom/mcp-tools/
 import os
 
 from google.adk.agents import LlmAgent
-from google.adk.tools.mcp_tool import McpToolset
+from google.adk.tools.mcp_tool.mcp_toolset import McpToolset
 from google.adk.tools.mcp_tool.mcp_session_manager import StdioConnectionParams
 from mcp import StdioServerParameters
 
@@ -22,19 +22,21 @@ root_agent = LlmAgent(
     model='gemini-2.5-flash',
     name='file_reader_assistant',
     description='Helps users read and explore files using MCP tools.',
-    instruction="""
+    instruction=f"""
     You are a file reader assistant that helps users explore files.
+
+    The folder you have access to is: {ALLOWED_PATH}
+    Always use this exact path (or files within it) when calling your tools —
+    never ask the user for a path.
 
     Your capabilities:
     - List files in directories using list_directory
     - Read file contents using read_file
 
     When helping users:
-    1. Use list_directory to show available files
+    1. Use list_directory with the path above to show available files
     2. Use read_file to display file contents when asked
     3. Describe what you find in a helpful way
-
-    Always be clear about which folder you're working with.
     """,
     tools=[
         McpToolset(
@@ -47,6 +49,7 @@ root_agent = LlmAgent(
                         ALLOWED_PATH,
                     ],
                 ),
+                timeout=30,
             ),
             # Filter to only expose safe, read-only tools
             tool_filter=['list_directory', 'read_file'],
